@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>香港大富翁 · 生字挑戰</title>
+<style>
+  :root {
+    --bg: #0c0c12;
+    --card: #16161f;
+    --accent: #e8b923;
+    --accent2: #00c853;
+    --text: #f5f5f7;
+    --muted: #8b8b9a;
+    --success: #00c853;
+    --money: #ffd700;
+    --danger: #ff5c7a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 10px;
+    line-height: 1.35;
+  }
+  .container { max-width: 480px; margin: 0 auto; }
+  h1 {
+    font-size: 1.4rem;
+    text-align: center;
+    margin: 6px 0 2px;
+    background: linear-gradient(90deg, #e8b923, #00c853);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle { text-align: center; color: var(--muted); font-size: 0.8rem; margin-bottom: 10px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+  }
+  .btn {
+    display: block; width: 100%;
+    background: var(--accent);
+    color: #111;
+    border: none;
+    border-radius: 14px;
+    padding: 15px 18px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin: 7px 0;
+    transition: transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.secondary { background: #2a2a38; color: #ddd; }
+  .btn.success { background: var(--success); color: #000; font-size: 1.25rem; padding: 20px; }
+  .btn.soft { background: #3a3a4a; color: #eee; font-size: 1.15rem; padding: 20px; }
+  .header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .badge {
+    background: #2a2a38;
+    padding: 5px 11px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+  }
+  .money-display {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--money);
+    margin: 6px 0;
+    text-shadow: 0 0 12px rgba(255,215,0,0.35);
+  }
+  .money-label { font-size: 0.75rem; color: var(--muted); text-align: center; }
+  .stats-row {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    margin: 8px 0;
+  }
+  .stat-val { font-size: 1.25rem; font-weight: 700; }
+  .stat-label { font-size: 0.7rem; color: var(--muted); }
+  .goal-bar {
+    background: #1a1a24;
+    border-radius: 12px;
+    padding: 10px;
+    margin: 8px 0;
+    text-align: center;
+  }
+  .goal-text { font-size: 0.85rem; color: var(--muted); }
+  .goal-progress { font-size: 1.1rem; font-weight: 700; color: var(--accent2); margin-top: 3px; }
+  .day-hint { font-size: 0.76rem; color: var(--muted); text-align: center; margin-top: 6px; }
+  .footer { text-align: center; color: var(--muted); font-size: 0.68rem; margin-top: 16px; }
+
+  /* Fullscreen practice */
+  #practice {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--bg);
+    z-index: 100;
+    padding: 12px;
+    display: none;
+    flex-direction: column;
+  }
+  #practice.active {
+    display: flex !important;
+  }
+  .practice-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .char-display {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: min(55vw, 42vh, 200px);
+    font-weight: 500;
+    line-height: 1;
+    text-align: center;
+  }
+  .practice-bottom {
+    flex-shrink: 0;
+    padding-bottom: 10px;
+  }
+  .parent-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  .parent-btns .btn { margin: 0; }
+  .pop-feedback {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    min-height: 1.6em;
+    margin: 6px 0;
+  }
+  .pop-feedback.good { color: var(--success); }
+  .pop-feedback.soft { color: #a0a0b0; }
+  .progress-bar {
+    height: 8px;
+    background: #2a2a38;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e8b923, #00c853);
+    transition: width 0.3s;
+  }
+
+  /* Property */
+  .property-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .prop-card {
+    background: #1e1e2a;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .prop-card.owned { border-color: var(--accent); background: #2a2410; }
+  .prop-card.hotel { border-color: #e74c3c; background: #2a1210; }
+  .prop-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
+  .prop-price { color: var(--money); font-size: 0.8rem; }
+  .prop-status { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+  .prop-color { height: 8px; border-radius: 3px; margin-bottom: 6px; }
+  .houses-row {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin-top: 4px;
+    min-height: 24px;
+    flex-wrap: wrap;
+  }
+  .house-svg { display: inline-block; vertical-align: middle; margin: 0 1px; }
+
+  /* Record */
+  .record-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1e1e2a;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+  }
+  .record-char { font-size: 1.5rem; font-weight: 600; width: 40px; text-align: center; }
+  .record-stats { flex: 1; display: flex; gap: 12px; justify-content: flex-end; font-size: 0.85rem; }
+  .ok-count { color: var(--success); }
+  .fail-count { color: var(--danger); }
+  .mastered-tag {
+    background: #0d3a2a;
+    color: var(--success);
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 6px;
+  }
+  .section-title {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin: 12px 0 8px;
+    font-weight: 600;
+  }
+
+  /* Password input */
+  .pin-input {
+    width: 100%;
+    font-size: 2rem;
+    text-align: center;
+    letter-spacing: 12px;
+    padding: 14px;
+    border-radius: 12px;
+    border: 2px solid #333;
+    background: #1e1e2a;
+    color: var(--text);
+    outline: none;
+    margin: 12px 0;
+  }
+  .pin-input:focus { border-color: var(--accent); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 22px;
+    width: 100%;
+    max-width: 340px;
+    text-align: center;
+  }
+  .modal h3 { margin-bottom: 10px; font-size: 1.2rem; }
+  .modal p { color: var(--muted); margin-bottom: 12px; font-size: 0.9rem; }
+  .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #222;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+  /* 9:16 portrait summary */
+  #summary.screen.active {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: var(--bg);
+    padding: 0;
+    overflow: hidden;
+  }
+  .summary-portrait {
+    width: 100%;
+    height: 100%;
+    max-width: 430px;
+    margin: 0 auto;
+    aspect-ratio: 9 / 16;
+    max-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 50% 20%, #1a1a28 0%, var(--bg) 70%);
+    padding: 24px 18px;
+    box-sizing: border-box;
+  }
+  .summary-inner {
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: min(100%, 720px);
+  }
+  .summary-eyebrow {
+    font-size: 1rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+  }
+  .summary-total {
+    font-size: clamp(2.6rem, 12vw, 3.4rem);
+    font-weight: 800;
+    color: var(--money);
+    margin-bottom: 22px;
+    opacity: 0;
+    text-shadow: 0 0 24px rgba(255,215,0,0.35);
+  }
+  .summary-rows {
+    width: 100%;
+    max-width: 340px;
+  }
+  .sum-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    border: 1px solid #2a2a38;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .sum-row-label { font-size: 1rem; color: var(--muted); }
+  .sum-row-value { font-size: 1.4rem; font-weight: 800; color: var(--money); }
+  .sum-row.show { opacity: 1 !important; transform: translateY(0) !important; }
+  .summary-card-detail {
+    display: none;
+    opacity: 0;
+    margin: 4px 0 12px;
+    padding: 14px;
+    background: #f5f0e1;
+    border: 3px solid #222;
+    border-radius: 12px;
+    color: #222;
+    transition: opacity 0.4s;
+  }
+  .summary-success {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 0.95rem;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .summary-btn {
+    max-width: 280px;
+    width: 100%;
+    margin: 22px auto 0;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .sum-pop { animation: popIn 0.55s ease forwards; }
+  @keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.08); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HOME -->
+  <div id="home" class="screen active">
+    <h1>香港大富翁 · 生字挑戰</h1>
+    <p class="subtitle">讀生字賺大錢 · 買地起酒店</p>
+
+    <div class="card">
+      <div class="money-label">目前身家</div>
+      <div class="money-display" id="homeMoney">$0</div>
+      <div class="stats-row">
+        <div><div class="stat-val" id="homeOwned">0</div><div class="stat-label">已擁有地</div></div>
+        <div><div class="stat-val" id="homeHotels">0</div><div class="stat-label">酒店</div></div>
+        <div><div class="stat-val" id="homeMastered">0</div><div class="stat-label">已掌握字</div></div>
+      </div>
+    </div>
+
+    <div class="goal-bar">
+      <div class="goal-text">目標：擁有全部地產 + 全部起酒店</div>
+      <div class="goal-progress" id="goalProgress">0 / 22 地 · 0 / 22 酒店</div>
+    </div>
+
+    <button class="btn" style="background:linear-gradient(90deg,#e8b923,#00c853);color:#111;font-size:1.25rem;padding:18px" onclick="askStart()">
+      開始（隨機20字）
+    </button>
+    <button class="btn secondary" onclick="showMap()">我的地產地圖</button>
+    <button class="btn secondary" onclick="showRecord()">學習記錄</button>
+    <button class="btn secondary" onclick="showUpload()">管理字庫</button>
+    <button class="btn secondary" onclick="showPinSetting()">設定密碼（家長）</button>
+    <button class="btn secondary" style="font-size:0.85rem;padding:10px" onclick="askReset()">重置遊戲</button>
+
+    <p class="day-hint">成功比「將會成功」多3次 → 該字不再出現<br>完成挑戰有過場：讀字收入＋租金＋機會／公益卡</p>
+    <div class="footer">香港版大富翁 · 生字練習</div>
+  </div>
+
+  <!-- PIN SETTING -->
+  <div id="pinSetting" class="screen">
+    <div class="header-bar">
+      <button class="btn secondary" style="width:auto;padding:7px 12px;margin:0" onclick="showScreen('home')">← 返回</button>
+      <span class="badge">設定密碼</span>
+    </div>
+    <div class="card">
+      <p style="text-align:center;color:var(--muted);margin-bottom:8px" id="pinSettingDesc">請設定4位數字家長密碼<br>開始測試前需要輸入此密碼</p>
+      <div id="oldPinArea" style="display:none">
+        <p style="text-align:center;color:var(--muted);font-size:0.85rem;margin-bottom:4px">請先輸入目前密碼</p>
+        <input type="tel" maxlength="4" pattern="[0-9]*" inputmode="numeric" class="pin-input" id="oldPin" placeholder="目前密碼" autocomplete="off">
+      </div>
+      <input type="tel" maxlength="4" pattern="[0-9]*" inputmode="numeric" class="pin-input" id="newPin" placeholder="新密碼 ••••" autocomplete="off">
+      <input type="tel" maxlength="4" pattern="[0-9]*" inputmode="numeric" class="pin-input" id="confirmPin" placeholder="再輸入一次新密碼" autocomplete="off">
+      <button class="btn" onclick="savePin()">儲存密碼</button>
+      <p id="pinStatus" style="text-align:center;margin-top:10px;font-size:0.9rem;color:var(--muted)"></p>
+    </div>
+  </div>
+
+  <!-- PIN CHECK (before start) -->
+  <div id="pinCheck" class="screen">
+    <div class="header-bar">
+      <button class="btn secondary" style="width:auto;padding:7px 12px;margin:0" onclick="showScreen('home')">← 返回</button>
+      <span class="badge">家長驗證</span>
+    </div>
+    <div class="card">
+      <p style="text-align:center;color:var(--muted);margin-bottom:8px">請輸入4位家長密碼以開始測試</p>
+      <input type="tel" maxlength="4" pattern="[0-9]*" inputmode="numeric" class="pin-input" id="checkPin" placeholder="••••" autocomplete="off">
+      <button class="btn" onclick="verifyPin()">確認開始</button>
+      <p id="checkPinMsg" style="text-align:center;margin-top:10px;font-size:0.9rem;color:var(--danger)"></p>
+    </div>
+  </div>
+
+  <!-- PRACTICE (fullscreen) -->
+  <div id="practice" class="screen">
+    <div class="practice-top">
+      <button class="btn secondary" style="width:auto;padding:7px 12px;margin:0;font-size:0.85rem" onclick="endPractice()">← 結束</button>
+      <span class="badge" id="pMoneyBadge">$0</span>
+    </div>
+    <div style="text-align:center;color:var(--muted);font-size:0.85rem;margin-top:4px">
+      第 <span id="pNum">1</span> / <span id="pTotal">20</span> 個
+    </div>
+    <div class="char-display" id="pChar">中</div>
+    <div class="practice-bottom">
+      <div class="pop-feedback" id="pFeedback"></div>
+      <div class="parent-btns">
+        <button class="btn success" onclick="rate(true)">✅ 成功</button>
+        <button class="btn soft" onclick="rate(false)">💪 將會成功</button>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="pProgress" style="width:0%"></div></div>
+      <div style="text-align:center;color:var(--muted);font-size:0.8rem;margin-top:4px">
+        本次已賺 $<span id="pEarned">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div id="map" class="screen">
+    <div class="header-bar">
+      <button class="btn secondary" style="width:auto;padding:7px 12px;margin:0" onclick="showScreen('home')">← 返回</button>
+      <span class="badge">我的地產</span>
+    </div>
+    <div class="money-display" id="mapMoney" style="font-size:1.5rem">$0</div>
+    <div class="goal-bar">
+      <div class="goal-text">目標：全部擁有 + 全部酒店</div>
+      <div class="goal-progress" id="mapGoal">0/22 地 · 0/22 酒店</div>
+    </div>
+    <div class="property-grid" id="propGrid"></div>
+    <p class="day-hint" style="margin-top:12px">點擊地產即可買入／起屋<br>必須擁有同色全部地才能起屋<br>綠色屋 = 普通屋　紅色屋 = 酒店</p>
+  </div>
+
+  <!-- RECORD -->
+  <div id="record" class="screen">
+    <div class="header-bar">
+      <button class="btn secondary" style="width:auto;padding:7px 12px;margin:0" onclick="showScreen('home')">← 返回</button>
+      <span class="badge">學習記錄</span>
+    </div>
+    <div class="card">
+      <div class="stats-row">
+        <div><div class="stat-val" id="recTotal">0</div><div class="stat-label">總字數</div></div>
+        <div><div class="stat-val" id="recMastered" style="color:var(--success)">0</div><div class="stat-label">已掌握</div></div>
+        <div><div class="stat-val" id="recLearning" style="color:var(--accent)">0</div><div class="stat-label">學習中</div></div>
+      </div>
+    </div>
+    <div class="section-title">已充分掌握的字（成功比將會成功多3次）</div>
+    <div id="masteredList"></div>
+    <div class="section-title">學習中／尚未練習的字</div>
+    <div id="learningList"></div>
+  </div>
+
+
+  <!-- CARD DRAW -->
+  <div id="cardDraw" class="screen">
+    <div style="text-align:center;padding-top:30px">
+      <p id="cardDeckLabel" style="color:var(--muted);font-size:1rem;margin-bottom:16px;font-weight:600">抽卡中…</p>
+      <div id="cardBack" onclick="revealCard()" style="
+        width:210px;height:300px;margin:0 auto;
+        background:#e8f5e9;
+        border:4px solid #1a1a1a;
+        border-radius:8px;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        box-shadow:0 8px 32px rgba(0,0,0,0.4);
+        transition:transform 0.5s;
+        cursor:pointer;
+        position:relative;
+      ">
+        <div id="cardBackTitle" style="font-size:1.4rem;font-weight:800;color:#1a1a1a;letter-spacing:3px;margin-bottom:16px">CHANCE</div>
+        <div id="cardBackArt" style="width:120px;height:140px"></div>
+      </div>
+      <div id="cardFront" style="display:none;
+        width:230px;min-height:260px;margin:0 auto;padding:18px;
+        background:#f5f0e1;
+        border:4px solid #1a1a1a;
+        border-radius:8px;
+        text-align:center;
+        box-shadow:0 8px 32px rgba(0,0,0,0.4);
+      ">
+        <div id="cardType" style="font-size:0.95rem;color:#1a1a1a;margin-bottom:12px;font-weight:800;letter-spacing:2px"></div>
+        <div id="cardFrontArt" style="margin:8px auto 12px;width:80px;height:70px"></div>
+        <div id="cardText" style="font-size:1.1rem;line-height:1.5;margin-bottom:14px;color:#222"></div>
+        <div id="cardEffect" style="font-size:1.5rem;font-weight:800;color:#c9a227"></div>
+      </div>
+      <p id="cardHint" style="color:var(--muted);font-size:0.9rem;margin-top:18px">點擊卡片揭曉</p>
+      <button class="btn" id="cardContinueBtn" style="display:none;margin-top:18px;max-width:280px;margin-left:auto;margin-right:auto" onclick="finishAfterCard()">繼續</button>
+    </div>
+  </div>
+
+
+  <!-- MANAGE CHAR BANK -->
+  <div id="upload" class="screen">
+    <div class="header-bar">
+      <button class="btn secondary" style="width:auto;padding:7px 12px;margin:0" onclick="showScreen('home')">← 返回</button>
+      <span class="badge">管理字庫</span>
+    </div>
+    <div class="card">
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:12px">
+        加入新字（可一次多個，用空白、逗號或換行分隔）
+      </p>
+      <textarea id="uploadText" rows="3" style="
+        width:100%;padding:12px;border-radius:12px;border:2px solid #333;
+        background:#1e1e2a;color:var(--text);font-size:1.3rem;
+        resize:vertical;outline:none;
+      " placeholder="例如：春 夏 秋 冬"></textarea>
+      <button class="btn" style="margin-top:12px" onclick="uploadChars()">加入字庫</button>
+      <p id="uploadMsg" style="text-align:center;margin-top:10px;font-size:0.9rem;color:var(--muted)"></p>
+    </div>
+    <div class="card">
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:8px">
+        目前字庫共 <span id="uploadTotal">0</span> 字 · 點擊字可刪除
+      </p>
+      <div id="uploadPreview" style="max-height:320px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:6px;font-size:1.25rem"></div>
+    </div>
+  </div>
+
+
+  <!-- SUMMARY ANIMATION (9:16 portrait) -->
+  <div id="summary" class="screen">
+    <div class="summary-portrait">
+      <div class="summary-inner">
+        <p class="summary-eyebrow">挑戰完成！</p>
+        <div id="sumTotalBig" class="summary-total">+$0</div>
+        <div id="sumRows" class="summary-rows">
+          <div class="sum-row" id="sumRowRead">
+            <div class="sum-row-label">讀字收入</div>
+            <div class="sum-row-value" id="sumReadVal">+$0</div>
+          </div>
+          <div class="sum-row" id="sumRowRent">
+            <div class="sum-row-label">租金收入</div>
+            <div class="sum-row-value" id="sumRentVal">+$0</div>
+          </div>
+          <div class="sum-row" id="sumRowCard">
+            <div class="sum-row-label" id="sumCardLabel">機會／公益卡</div>
+            <div class="sum-row-value" id="sumCardVal">—</div>
+          </div>
+          <div id="sumCardDetail" class="summary-card-detail">
+            <div id="sumCardArt" style="margin-bottom:6px"></div>
+            <div id="sumCardText" style="font-size:0.95rem;line-height:1.4"></div>
+          </div>
+        </div>
+        <div class="summary-success" id="sumSuccessLine">成功 0/20 字</div>
+        <button class="btn summary-btn" id="sumNextBtn" onclick="showFinalResult()">查看結果</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result" class="screen">
+    <div class="card" style="text-align:center">
+      <div style="font-size:2.8rem;font-weight:800;color:var(--money)" id="resultMoney">+$0</div>
+      <p id="resultMsg" style="margin:12px 0;font-size:1.15rem"></p>
+      <p id="resultDetail" style="color:var(--muted);margin-bottom:16px;white-space:pre-line"></p>
+      <button class="btn" style="background:linear-gradient(90deg,#e8b923,#00c853);color:#111" onclick="startPractice()">繼續挑戰（再來20字）</button>
+      <button class="btn secondary" onclick="showScreen('home')">返回主頁</button>
+      <button class="btn secondary" onclick="showMap()">去買地起屋</button>
+      <button class="btn secondary" onclick="showRecord()">查看學習記錄</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modalTitle">確認</h3>
+    <p id="modalMsg"></p>
+    <div class="modal-btns">
+      <button class="btn secondary" onclick="closeModal()">取消</button>
+      <button class="btn success" id="modalOk">確定</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var ALL_CHARS = [
+  "中","名","叫","語","美","今","六","事","識","歲","話","平","以","故","知","年","文","會","豐","講","富","什","都","閱",
+  "麼","該","橋","益","房","哈","玲","樑","樓","拿","搭","方","紀","笑","糖","應","積","歡","吃","長","果","梨","木","所",
+  "蛀","注","給","容","護","土","喜","傑","澆","壞","易","活","痛","婆","水","為","樹","問","意","屋","喝","保","泥","花",
+  "草","面","日","命","邊","月","陽","全","七","能","兩","錢","光","園","蓄","很","張","送","照","間","像","攝","西","慣",
+  "墨","幣","杜","豬","儲","荷","它","麗","鷗","別","星","玫","東","班","用","只","剪","雄","樣","期","亮","銀","瑰","睡",
+  "太","獅","尾","踢","鈎","辮","公","扇","巴","誇","細","條","從","象","怕","遲","朵","虎","耳","重","腿","笨","鼻","柱",
+  "遇","巷","處","蚊","煙","兒","掛","共","團","炮","餐","熱","貼","換","街","貌","聯","聲","戶","鬧","恭","春","飄","女",
+  "糕","白","候","男","步","神","龍","溫","睛","少","眼","裝","舞","集","枝","歌","仔","招","精","腦","地","專","跟","鳥",
+  "唱","賓","低","營","非","打","微","健","轉","肉","定","倘","魚","康","然","疏","蜓","雲","其","蜻","端","菜","飛","架"
+];
+
+var PROPERTIES = [
+  { id:0,  name:"長洲",     price:60,  houseCost:50,  color:"#8B4513" },
+  { id:1,  name:"大嶼山",   price:60,  houseCost:50,  color:"#8B4513" },
+  { id:2,  name:"上水",     price:100, houseCost:50,  color:"#87CEEB" },
+  { id:3,  name:"觀塘",     price:100, houseCost:50,  color:"#87CEEB" },
+  { id:4,  name:"深水埗",   price:120, houseCost:50,  color:"#87CEEB" },
+  { id:5,  name:"屯門",     price:140, houseCost:100, color:"#FF69B4" },
+  { id:6,  name:"元朗",     price:140, houseCost:100, color:"#FF69B4" },
+  { id:7,  name:"大埔",     price:160, houseCost:100, color:"#FF69B4" },
+  { id:8,  name:"大圍",     price:180, houseCost:100, color:"#FFA500" },
+  { id:9,  name:"沙田",     price:180, houseCost:100, color:"#FFA500" },
+  { id:10, name:"馬鞍山",   price:200, houseCost:100, color:"#FFA500" },
+  { id:11, name:"將軍澳",   price:220, houseCost:150, color:"#FF0000" },
+  { id:12, name:"荃灣",     price:220, houseCost:150, color:"#FF0000" },
+  { id:13, name:"啟德",     price:240, houseCost:150, color:"#FF0000" },
+  { id:14, name:"旺角",     price:260, houseCost:150, color:"#FFD700" },
+  { id:15, name:"尖沙咀",   price:260, houseCost:150, color:"#FFD700" },
+  { id:16, name:"北角",     price:280, houseCost:150, color:"#FFD700" },
+  { id:17, name:"銅鑼灣",   price:300, houseCost:200, color:"#228B22" },
+  { id:18, name:"灣仔",     price:300, houseCost:200, color:"#228B22" },
+  { id:19, name:"中環",     price:320, houseCost:200, color:"#228B22" },
+  { id:20, name:"淺水灣",   price:350, houseCost:200, color:"#00008B" },
+  { id:21, name:"太平山",   price:400, houseCost:200, color:"#00008B" }
+];
+var TOTAL_PROPS = PROPERTIES.length;
+
+// 同色組地產 id
+var COLOR_GROUPS = {
+  brown: [0, 1],
+  lightblue: [2, 3, 4],
+  pink: [5, 6, 7],
+  orange: [8, 9, 10],
+  red: [11, 12, 13],
+  yellow: [14, 15, 16],
+  green: [17, 18, 19],
+  darkblue: [20, 21]
+};
+var PROP_COLOR = {};
+for (var g in COLOR_GROUPS) {
+  COLOR_GROUPS[g].forEach(function(id) { PROP_COLOR[id] = g; });
+}
+function ownsFullColorGroup(propId) {
+  var group = PROP_COLOR[propId];
+  if (!group) return false;
+  var ids = COLOR_GROUPS[group];
+  for (var i = 0; i < ids.length; i++) {
+    if (!progress.owned[ids[i]]) return false;
+  }
+  return true;
+}
+
+
+var progress = null;
+try { progress = JSON.parse(localStorage.getItem('hkMonopolyV7') || 'null'); } catch(e) { progress = null; }
+if (!progress) {
+  progress = { money: 0, owned: {}, houses: {}, totalSuccess: 0, chars: {}, pin: '', extraChars: [], removedChars: [] };
+}
+if (typeof progress.money !== 'number') progress.money = 0;
+if (!progress.chars) progress.chars = {};
+if (typeof progress.pin !== 'string') progress.pin = '';
+if (!Array.isArray(progress.extraChars)) progress.extraChars = [];
+if (!Array.isArray(progress.removedChars)) progress.removedChars = [];
+
+var pList = [], pIndex = 0, pSuccess = 0, pEarned = 0;
+var pendingAction = null;
+
+function save() {
+  try { localStorage.setItem('hkMonopolyV7', JSON.stringify(progress)); } catch(e) {}
+}
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+function openModal(title, msg, onOk) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalMsg').textContent = msg;
+  pendingAction = onOk;
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+  pendingAction = null;
+}
+document.getElementById('modalOk').onclick = function() {
+  var fn = pendingAction;
+  closeModal();
+  if (fn) fn();
+};
+
+
+function getAllChars() {
+  var base = ALL_CHARS.slice();
+  var extra = progress.extraChars || [];
+  var removed = progress.removedChars || [];
+  var removedSet = {};
+  removed.forEach(function(c) { removedSet[c] = true; });
+  var seen = {};
+  var result = [];
+  base.concat(extra).forEach(function(c) {
+    if (c && !seen[c] && !removedSet[c]) { seen[c] = true; result.push(c); }
+  });
+  return result;
+}
+
+function showUpload() {
+  document.getElementById('uploadText').value = '';
+  document.getElementById('uploadMsg').textContent = '';
+  refreshUploadPreview();
+  showScreen('upload');
+}
+
+function refreshUploadPreview() {
+  var all = getAllChars();
+  document.getElementById('uploadTotal').textContent = all.length;
+  var prev = document.getElementById('uploadPreview');
+  prev.innerHTML = '';
+  var baseSet = {};
+  ALL_CHARS.forEach(function(c) { baseSet[c] = true; });
+  all.forEach(function(c) {
+    var s = document.createElement('span');
+    s.textContent = c;
+    var isExtra = !baseSet[c];
+    s.style.cssText = 'background:#1e1e2a;padding:6px 10px;border-radius:8px;cursor:pointer;border:1px solid ' + (isExtra ? '#e8b923' : '#333') + ';';
+    s.title = isExtra ? '自訂字：點擊刪除' : '預設字：點擊刪除（可從練習中移除）';
+    s.onclick = function() { removeCharFromBank(c); };
+    prev.appendChild(s);
+  });
+}
+
+function removeCharFromBank(c) {
+  openModal('刪除字', '確定從字庫移除「' + c + '」？\n（學習記錄會保留，但不會再抽到）', function() {
+    if (!progress.removedChars) progress.removedChars = [];
+    // 若是自訂字，從 extraChars 移除
+    if (progress.extraChars) {
+      progress.extraChars = progress.extraChars.filter(function(x) { return x !== c; });
+    }
+    // 預設字：加入移除清單
+    if (ALL_CHARS.indexOf(c) >= 0 && progress.removedChars.indexOf(c) < 0) {
+      progress.removedChars.push(c);
+    }
+    save();
+    showToast('已移除「' + c + '」');
+    refreshUploadPreview();
+  });
+}
+
+function uploadChars() {
+  var raw = document.getElementById('uploadText').value;
+  // 提取所有中日韓統一表意文字
+  var matches = raw.match(/[\u4e00-\u9fff]/g) || [];
+  if (matches.length === 0) {
+    document.getElementById('uploadMsg').textContent = '請輸入中文字';
+    document.getElementById('uploadMsg').style.color = 'var(--danger)';
+    return;
+  }
+  if (!progress.extraChars) progress.extraChars = [];
+  var existing = {};
+  getAllChars().forEach(function(c) { existing[c] = true; });
+  var added = 0;
+  matches.forEach(function(c) {
+    if (!existing[c]) {
+      progress.extraChars.push(c);
+      existing[c] = true;
+      added++;
+    }
+  });
+  save();
+  document.getElementById('uploadMsg').textContent = added > 0 ? ('成功加入 ' + added + ' 個新字！') : '這些字已在字庫中';
+  document.getElementById('uploadMsg').style.color = added > 0 ? 'var(--success)' : 'var(--muted)';
+  document.getElementById('uploadText').value = '';
+  refreshUploadPreview();
+  showToast(added > 0 ? '已加入 ' + added + ' 個新字' : '沒有新字');
+}
+
+function getCharStat(c) {
+  if (!progress.chars[c]) progress.chars[c] = { ok: 0, fail: 0 };
+  return progress.chars[c];
+}
+function isMastered(c) {
+  var s = progress.chars[c];
+  // 成功次數要比「將會成功」次數多 3 次或以上才算充分掌握
+  return s && (s.ok - (s.fail || 0) >= 3);
+}
+
+function init() { updateHome(); }
+function updateHome() {
+  document.getElementById('homeMoney').textContent = '$' + progress.money;
+  var ownedCount = Object.keys(progress.owned).length;
+  var hotelCount = 0;
+  for (var id in progress.houses) { if (progress.houses[id] >= 5) hotelCount++; }
+  var mastered = 0;
+  for (var c in progress.chars) { if (progress.chars[c].ok >= 3) mastered++; }
+  document.getElementById('homeOwned').textContent = ownedCount;
+  document.getElementById('homeHotels').textContent = hotelCount;
+  document.getElementById('homeMastered').textContent = mastered;
+  document.getElementById('goalProgress').textContent = ownedCount + ' / ' + TOTAL_PROPS + ' 地 · ' + hotelCount + ' / ' + TOTAL_PROPS + ' 酒店';
+}
+
+function showScreen(id) {
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) screens[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+  if (id === 'home') updateHome();
+  // clear pin inputs
+  if (id === 'pinCheck') {
+    document.getElementById('checkPin').value = '';
+    document.getElementById('checkPinMsg').textContent = '';
+  }
+}
+
+// ========== PIN ==========
+function showPinSetting() {
+  document.getElementById('newPin').value = '';
+  document.getElementById('confirmPin').value = '';
+  document.getElementById('oldPin').value = '';
+  var status = document.getElementById('pinStatus');
+  var oldArea = document.getElementById('oldPinArea');
+  var desc = document.getElementById('pinSettingDesc');
+  if (progress.pin) {
+    oldArea.style.display = 'block';
+    desc.innerHTML = '更改密碼需要先驗證目前密碼';
+    status.textContent = '目前已設定密碼';
+    status.style.color = 'var(--success)';
+  } else {
+    oldArea.style.display = 'none';
+    desc.innerHTML = '請設定4位數字家長密碼<br>開始測試前需要輸入此密碼';
+    status.textContent = '尚未設定密碼，請設定一組4位數字';
+    status.style.color = 'var(--muted)';
+  }
+  showScreen('pinSetting');
+}
+
+function savePin() {
+  var p1 = document.getElementById('newPin').value.trim();
+  var p2 = document.getElementById('confirmPin').value.trim();
+  var status = document.getElementById('pinStatus');
+  // 如果已有密碼，必須先驗證舊密碼
+  if (progress.pin) {
+    var old = document.getElementById('oldPin').value.trim();
+    if (old !== progress.pin) {
+      status.textContent = '目前密碼不正確';
+      status.style.color = 'var(--danger)';
+      return;
+    }
+  }
+  if (!/^\d{4}$/.test(p1)) {
+    status.textContent = '請輸入4位數字新密碼';
+    status.style.color = 'var(--danger)';
+    return;
+  }
+  if (p1 !== p2) {
+    status.textContent = '兩次新密碼不相同，請再試';
+    status.style.color = 'var(--danger)';
+    return;
+  }
+  progress.pin = p1;
+  save();
+  status.textContent = '密碼已儲存！';
+  status.style.color = 'var(--success)';
+  document.getElementById('oldPinArea').style.display = 'block';
+  document.getElementById('pinSettingDesc').innerHTML = '更改密碼需要先驗證目前密碼';
+  showToast('密碼設定成功');
+}
+
+function askStart() {
+  if (!progress.pin) {
+    showToast('請先到「設定密碼」設定4位家長密碼');
+    return;
+  }
+  showScreen('pinCheck');
+  setTimeout(function(){ document.getElementById('checkPin').focus(); }, 200);
+}
+
+function verifyPin() {
+  var input = document.getElementById('checkPin').value.trim();
+  var msg = document.getElementById('checkPinMsg');
+  if (input !== progress.pin) {
+    msg.textContent = '密碼錯誤，請再試';
+    return;
+  }
+  msg.textContent = '';
+  startPractice();
+}
+
+// ========== PRACTICE ==========
+function startPractice() {
+  var pool = [];
+  var allChars = getAllChars();
+  for (var i = 0; i < allChars.length; i++) {
+    var c = allChars[i];
+    // 充分掌握（成功比將會成功多3次或以上）的字不再出現
+    if (isMastered(c)) continue;
+    pool.push(c);
+  }
+  if (pool.length === 0) {
+    showToast('所有字都已掌握！太厲害了！');
+    showScreen('home');
+    return;
+  }
+  pool = shuffle(pool);
+  pList = pool.slice(0, Math.min(20, pool.length));
+  pIndex = 0;
+  pSuccess = 0;
+  pEarned = 0;
+  document.getElementById('pMoneyBadge').textContent = '$' + progress.money;
+  document.getElementById('pEarned').textContent = '0';
+  document.getElementById('pTotal').textContent = pList.length;
+  showChar();
+  showScreen('practice');
+}
+
+function showChar() {
+  if (pIndex >= pList.length) {
+    pendingRent = collectRent();
+    pendingCard = maybePickCard();
+    pendingCardDelta = 0;
+    save();
+    // 開始過場動畫：讀字收入 → 租金 → 機會／公益卡 → 總結
+    startSummaryAnimation();
+    return;
+  }
+  document.getElementById('pChar').textContent = pList[pIndex];
+  document.getElementById('pNum').textContent = pIndex + 1;
+  document.getElementById('pProgress').style.width = (pIndex / pList.length * 100) + '%';
+  document.getElementById('pFeedback').textContent = '';
+  document.getElementById('pFeedback').className = 'pop-feedback';
+}
+
+function rate(success) {
+  var char = pList[pIndex];
+  var stat = getCharStat(char);
+  var fb = document.getElementById('pFeedback');
+  if (success) {
+    progress.money += 10;
+    pEarned += 10;
+    pSuccess++;
+    progress.totalSuccess = (progress.totalSuccess || 0) + 1;
+    stat.ok += 1;
+    var diff = stat.ok - (stat.fail || 0);
+    fb.textContent = diff >= 3 ? '太棒了！+$10（已充分掌握！）' : '太棒了！+$10（還差 ' + Math.max(0, 3 - diff) + ' 次淨成功）';
+    fb.className = 'pop-feedback good';
+  } else {
+    stat.fail += 1;
+    fb.textContent = '將會成功！繼續加油';
+    fb.className = 'pop-feedback soft';
+  }
+  save();
+  document.getElementById('pMoneyBadge').textContent = '$' + progress.money;
+  document.getElementById('pEarned').textContent = pEarned;
+  setTimeout(function() {
+    pIndex++;
+    showChar();
+  }, 550);
+}
+
+function endPractice() {
+  openModal('結束測試', '確定結束這次測試？已賺的錢和記錄會保留。', function() {
+    showScreen('home');
+  });
+}
+
+// ========== RECORD ==========
+function showRecord() {
+  var mastered = [], learning = [], notStarted = [];
+  var allChars = getAllChars();
+  for (var i = 0; i < allChars.length; i++) {
+    var c = allChars[i];
+    var s = getCharStat(c);
+    if (isMastered(c)) mastered.push({ char: c, ok: s.ok, fail: s.fail });
+    else if (s.ok > 0 || s.fail > 0) learning.push({ char: c, ok: s.ok, fail: s.fail });
+    else notStarted.push({ char: c, ok: 0, fail: 0 });
+  }
+  mastered.sort(function(a,b){ return b.ok - a.ok; });
+  learning.sort(function(a,b){ return b.fail - a.fail || b.ok - a.ok; });
+
+  document.getElementById('recTotal').textContent = allChars.length;
+  document.getElementById('recMastered').textContent = mastered.length;
+  document.getElementById('recLearning').textContent = learning.length + notStarted.length;
+
+  var mList = document.getElementById('masteredList');
+  mList.innerHTML = '';
+  if (mastered.length === 0) {
+    mList.innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px">尚未有字充分掌握</p>';
+  } else {
+    mastered.forEach(function(item) {
+      var d = document.createElement('div');
+      d.className = 'record-item';
+      d.innerHTML = '<div class="record-char">' + item.char + '<span class="mastered-tag">已充分掌握</span></div>' +
+        '<div class="record-stats"><span class="ok-count">成功 ' + item.ok + '</span><span class="fail-count">將會成功 ' + item.fail + '</span></div>';
+      mList.appendChild(d);
+    });
+  }
+
+  var lList = document.getElementById('learningList');
+  lList.innerHTML = '';
+  if (learning.length === 0 && notStarted.length === 0) {
+    lList.innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px">字庫是空的</p>';
+  } else {
+    learning.forEach(function(item) {
+      var d = document.createElement('div');
+      d.className = 'record-item';
+      d.innerHTML = '<div class="record-char">' + item.char + '</div>' +
+        '<div class="record-stats"><span class="ok-count">成功 ' + item.ok + '</span><span class="fail-count">將會成功 ' + item.fail + '</span></div>';
+      lList.appendChild(d);
+    });
+    notStarted.forEach(function(item) {
+      var d = document.createElement('div');
+      d.className = 'record-item';
+      d.innerHTML = '<div class="record-char">' + item.char + '</div>' +
+        '<div class="record-stats"><span style="color:var(--muted)">尚未練習</span></div>';
+      lList.appendChild(d);
+    });
+  }
+  showScreen('record');
+}
+
+// ========== MAP ==========
+function showMap() {
+  document.getElementById('mapMoney').textContent = '$' + progress.money;
+  var ownedCount = Object.keys(progress.owned).length;
+  var hotelCount = 0;
+  for (var id in progress.houses) { if (progress.houses[id] >= 5) hotelCount++; }
+  document.getElementById('mapGoal').textContent = ownedCount + '/' + TOTAL_PROPS + ' 地 · ' + hotelCount + '/' + TOTAL_PROPS + ' 酒店';
+
+  var grid = document.getElementById('propGrid');
+  grid.innerHTML = '';
+  PROPERTIES.forEach(function(p) {
+    var owned = !!progress.owned[p.id];
+    var houses = progress.houses[p.id] || 0;
+    var isHotel = houses >= 5;
+    var div = document.createElement('div');
+    div.className = 'prop-card' + (owned ? ' owned' : '') + (isHotel ? ' hotel' : '');
+
+    var housesHtml = '<div class="houses-row">';
+    if (isHotel) {
+      housesHtml += '<svg class="house-svg" viewBox="0 0 64 64" width="28" height="28"><path fill="#ef4444" d="M32 4L4 28h8v28h16V40h8v16h16V28h8L32 4z"/></svg>';
+    } else {
+      for (var i = 0; i < houses; i++) {
+        housesHtml += '<svg class="house-svg" viewBox="0 0 64 64" width="20" height="20"><path fill="#22c55e" d="M32 4L4 28h8v28h16V40h8v16h16V28h8L32 4z"/></svg>';
+      }
+    }
+    housesHtml += '</div>';
+
+    var rent = owned ? getPropertyRent(p) : 0;
+    var status = '點擊買入 $' + p.price;
+    if (isHotel) status = '紅色酒店 · 收租 $' + rent;
+    else if (owned) status = ownsFullColorGroup(p.id) ? ('起屋 $' + p.houseCost + ' · 收租 $' + rent) : ('需同色全收 · 收租 $' + rent);
+
+    div.innerHTML = '<div class="prop-color" style="background:' + p.color + '"></div>' +
+      '<div class="prop-name">' + p.name + '</div>' +
+      '<div class="prop-price">' + (owned ? (isHotel ? '已起酒店' : '已擁有') : '$' + p.price) + '</div>' +
+      housesHtml +
+      '<div class="prop-status">' + status + '</div>';
+    div.addEventListener('click', function() { tryAction(p); });
+    grid.appendChild(div);
+  });
+  showScreen('map');
+}
+
+function tryAction(p) {
+  var houses = progress.houses[p.id] || 0;
+  if (houses >= 5) { showToast(p.name + ' 已經有紅色酒店了'); return; }
+  if (!progress.owned[p.id]) {
+    if (progress.money < p.price) { showToast('金錢不足！需要 $' + p.price); return; }
+    openModal('買入地產', '確定用 $' + p.price + ' 買入「' + p.name + '」？', function() {
+      progress.money -= p.price;
+      progress.owned[p.id] = true;
+      progress.houses[p.id] = 0;
+      save();
+      showToast('成功買入 ' + p.name + '！');
+      showMap();
+    });
+  } else {
+    // 必須擁有同色全部地才能起屋
+    if (!ownsFullColorGroup(p.id)) {
+      showToast('需要先擁有同顏色的全部地產，才能起屋');
+      return;
+    }
+    var cost = p.houseCost;
+    if (progress.money < cost) { showToast('金錢不足！起屋需要 $' + cost); return; }
+    var next = houses + 1;
+    var msg = next >= 5 ? '確定用 $' + cost + ' 把「' + p.name + '」建成紅色酒店？' : '確定用 $' + cost + ' 在「' + p.name + '」起一間綠色屋？（目前 ' + houses + ' 間）';
+    openModal(next >= 5 ? '建成酒店' : '起屋', msg, function() {
+      progress.money -= cost;
+      progress.houses[p.id] = next;
+      save();
+      showToast(next >= 5 ? p.name + ' 建成紅色酒店！' : p.name + ' 起了一間綠色屋');
+      showMap();
+    });
+  }
+}
+
+function askReset() {
+  openModal('重置遊戲', '確定清除所有金錢、地產、學習記錄和密碼？', function() {
+    progress = { money: 0, owned: {}, houses: {}, totalSuccess: 0, chars: {}, pin: '', extraChars: [], removedChars: [] };
+    save();
+    showToast('已重置遊戲');
+    init();
+    showScreen('home');
+  });
+}
+
+
+// ========== 收租 & 機會／公益卡 ==========
+function getPropertyRent(p) {
+  var houses = progress.houses[p.id] || 0;
+  if (!progress.owned[p.id]) return 0;
+  if (houses >= 5) return Math.floor(p.price * 0.8); // 酒店：地價 80%
+  if (houses >= 1) return Math.floor(p.price * 0.1) + houses * Math.floor(p.houseCost * 0.15);
+  return Math.floor(p.price * 0.08); // 空地基本租金
+}
+
+function collectRent() {
+  var total = 0;
+  PROPERTIES.forEach(function(p) {
+    if (progress.owned[p.id]) total += getPropertyRent(p);
+  });
+  if (total > 0) {
+    progress.money += total;
+  }
+  return total;
+}
+
+var CHANCE_CARDS = [
+  { text: '機會：銀行分紅！獲得 $50', effect: function() { progress.money += 50; return 50; } },
+  { text: '機會：找到寶藏！獲得 $80', effect: function() { progress.money += 80; return 80; } },
+  { text: '機會：親戚寄來紅包 $30', effect: function() { progress.money += 30; return 30; } },
+  { text: '機會：中了小獎！獲得 $100', effect: function() { progress.money += 100; return 100; } },
+  { text: '機會：繳交學費，支付 $40', effect: function() { var m = Math.min(40, progress.money); progress.money -= m; return -m; } },
+  { text: '機會：維修房屋，支付 $30', effect: function() { var m = Math.min(30, progress.money); progress.money -= m; return -m; } },
+  { text: '機會：免費起一間屋！（隨機一塊有地的）', effect: function() {
+      var candidates = [];
+      PROPERTIES.forEach(function(p) {
+        if (progress.owned[p.id] && ownsFullColorGroup(p.id) && (progress.houses[p.id] || 0) < 5) candidates.push(p);
+      });
+      if (candidates.length === 0) { progress.money += 20; return 20; }
+      var p = candidates[Math.floor(Math.random() * candidates.length)];
+      progress.houses[p.id] = (progress.houses[p.id] || 0) + 1;
+      return 0;
+    }
+  },
+  { text: '機會：前進！額外獲得 $60', effect: function() { progress.money += 60; return 60; } }
+];
+
+var COMMUNITY_CARDS = [
+  { text: '公益：生日禮物！獲得 $50', effect: function() { progress.money += 50; return 50; } },
+  { text: '公益：做善事有回報，獲得 $40', effect: function() { progress.money += 40; return 40; } },
+  { text: '公益：同學請喝飲料，獲得 $20', effect: function() { progress.money += 20; return 20; } },
+  { text: '公益：醫院費，支付 $30', effect: function() { var m = Math.min(30, progress.money); progress.money -= m; return -m; } },
+  { text: '公益：買文具，支付 $20', effect: function() { var m = Math.min(20, progress.money); progress.money -= m; return -m; } },
+  { text: '公益：老師獎勵勤奮！獲得 $70', effect: function() { progress.money += 70; return 70; } },
+  { text: '公益：遺產繼承 $90', effect: function() { progress.money += 90; return 90; } },
+  { text: '公益：免費升級一間屋成酒店機會！', effect: function() {
+      var candidates = [];
+      PROPERTIES.forEach(function(p) {
+        if (progress.owned[p.id] && (progress.houses[p.id] || 0) === 4) candidates.push(p);
+      });
+      if (candidates.length === 0) { progress.money += 25; return 25; }
+      var p = candidates[Math.floor(Math.random() * candidates.length)];
+      progress.houses[p.id] = 5;
+      return 0;
+    }
+  }
+];
+
+var pendingRent = 0;
+var pendingCard = null;
+var pendingCardDelta = 0;
+
+function maybePickCard() {
+  if (Math.random() > 0.60) return null;
+  var isChance = Math.random() < 0.5;
+  var deck = isChance ? CHANCE_CARDS : COMMUNITY_CARDS;
+  var card = deck[Math.floor(Math.random() * deck.length)];
+  return { card: card, isChance: isChance };
+}
+
+function startSummaryAnimation() {
+  // Apply card effect up front so money is correct
+  pendingCardDelta = 0;
+  if (pendingCard) {
+    pendingCardDelta = pendingCard.card.effect();
+    save();
+  }
+  var total = pEarned + pendingRent + pendingCardDelta;
+
+  document.getElementById('sumTotalBig').textContent = (total >= 0 ? '+$' : '-$') + Math.abs(total);
+  document.getElementById('sumTotalBig').style.opacity = '0';
+  document.getElementById('sumTotalBig').className = 'summary-total';
+
+  document.getElementById('sumReadVal').textContent = '+$' + pEarned;
+  document.getElementById('sumReadVal').style.color = 'var(--money)';
+
+  document.getElementById('sumRentVal').textContent = pendingRent > 0 ? ('+$' + pendingRent) : '$0';
+  document.getElementById('sumRentVal').style.color = pendingRent > 0 ? 'var(--accent2)' : 'var(--muted)';
+
+  var cardLabel = document.getElementById('sumCardLabel');
+  var cardVal = document.getElementById('sumCardVal');
+  var cardDetail = document.getElementById('sumCardDetail');
+  if (pendingCard) {
+    cardLabel.textContent = pendingCard.isChance ? '機會卡 CHANCE' : '公益卡 CHEST';
+    if (pendingCardDelta > 0) {
+      cardVal.textContent = '+$' + pendingCardDelta;
+      cardVal.style.color = 'var(--money)';
+    } else if (pendingCardDelta < 0) {
+      cardVal.textContent = '-$' + Math.abs(pendingCardDelta);
+      cardVal.style.color = 'var(--danger)';
+    } else {
+      cardVal.textContent = '特殊效果';
+      cardVal.style.color = 'var(--accent2)';
+    }
+    document.getElementById('sumCardText').textContent = pendingCard.card.text.replace(/^機會：|^公益：/, '');
+    document.getElementById('sumCardArt').innerHTML = pendingCard.isChance
+      ? '<span style="font-size:2rem;color:#e53935;font-weight:bold">?</span>'
+      : '<svg viewBox="0 0 120 100" width="48" height="40"><rect x="15" y="40" width="90" height="50" rx="4" fill="#1e88e5" stroke="#0d47a1" stroke-width="3"/><path d="M20 40 Q60 5 100 40" fill="#42a5f5" stroke="#0d47a1" stroke-width="3"/><rect x="50" y="55" width="20" height="16" rx="2" fill="#ffc107"/></svg>';
+    cardDetail.style.display = 'block';
+    cardDetail.style.opacity = '0';
+  } else {
+    cardLabel.textContent = '機會／公益卡';
+    cardVal.textContent = '今次沒有抽到';
+    cardVal.style.color = 'var(--muted)';
+    cardDetail.style.display = 'none';
+  }
+
+  document.getElementById('sumSuccessLine').textContent = '成功 ' + pSuccess + ' / ' + pList.length + ' 字';
+  document.getElementById('sumSuccessLine').style.opacity = '0';
+  document.getElementById('sumNextBtn').style.opacity = '0';
+
+  // reset row visibility
+  ['sumRowRead','sumRowRent','sumRowCard'].forEach(function(id) {
+    var el = document.getElementById(id);
+    el.classList.remove('show');
+  });
+  document.getElementById('sumTotalBig').style.opacity = '0';
+  document.getElementById('sumTotalBig').className = 'summary-total';
+  document.getElementById('sumSuccessLine').style.opacity = '0';
+  document.getElementById('sumNextBtn').style.opacity = '0';
+
+  showScreen('summary');
+
+  // staggered animation
+  setTimeout(function() {
+    document.getElementById('sumRowRead').classList.add('show');
+  }, 200);
+  setTimeout(function() {
+    document.getElementById('sumRowRent').classList.add('show');
+  }, 550);
+  setTimeout(function() {
+    document.getElementById('sumRowCard').classList.add('show');
+    if (pendingCard) {
+      setTimeout(function() {
+        document.getElementById('sumCardDetail').style.transition = 'opacity 0.4s';
+        document.getElementById('sumCardDetail').style.opacity = '1';
+      }, 200);
+    }
+  }, 900);
+  setTimeout(function() {
+    var big = document.getElementById('sumTotalBig');
+    big.className = 'summary-total sum-pop';
+    big.style.opacity = '1';
+    document.getElementById('sumSuccessLine').style.transition = 'opacity 0.4s';
+    document.getElementById('sumSuccessLine').style.opacity = '1';
+  }, 1300);
+  setTimeout(function() {
+    var btn = document.getElementById('sumNextBtn');
+    btn.style.transition = 'opacity 0.4s';
+    btn.style.opacity = '1';
+  }, 1700);
+}
+
+function showFinalResult() {
+  var total = pEarned + pendingRent + pendingCardDelta;
+  document.getElementById('resultMoney').textContent = (total >= 0 ? '+$' : '-$') + Math.abs(total);
+  document.getElementById('resultMsg').textContent = pSuccess + ' 個字讀得很好！';
+  var detail = '讀字 $' + pEarned + ' · 租金 $' + pendingRent;
+  if (pendingCard) {
+    if (pendingCardDelta > 0) detail += ' · 卡牌 +$' + pendingCardDelta;
+    else if (pendingCardDelta < 0) detail += ' · 卡牌 -$' + Math.abs(pendingCardDelta);
+    else detail += ' · 卡牌特殊效果';
+  }
+  detail += ' · 成功 ' + pSuccess + '/' + pList.length;
+  document.getElementById('resultDetail').textContent = detail;
+  pendingCard = null;
+  pendingCardDelta = 0;
+  pendingRent = 0;
+  showScreen('result');
+}
+
+function revealCard() {}
+function finishAfterCard() { showFinalResult(); }
+function summaryNext() { showFinalResult(); }
+function revealSummaryCard() {}
+function showSummaryStep() {}
+
+
+
+
+
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+init();
+</script>
+</body>
+</html>
